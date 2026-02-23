@@ -1,0 +1,7 @@
+{
+  "name": "Prep IA",
+  "description": "Assistente de IA para concursos públicos com simulados infinitos e resolução de questões por foto.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
