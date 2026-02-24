@@ -12,7 +12,7 @@ export default function Home() {
   const { theme, setTheme } = useTheme();
   const { user, updateUser, logout } = useUser();
   const { t, setLanguage, language } = useLanguage();
-  const { activities, points, studyTime } = useActivity();
+  const { activities, points } = useActivity();
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -242,10 +242,6 @@ export default function Home() {
               <h2 className="text-4xl font-bold mb-1">{accuracy}%</h2>
               <p className="text-blue-100 text-sm">
                 {t.home.accuracy} • {dailyQuestions} {t.home.questionsToday}
-              </p>
-              <p className="text-blue-100 text-sm mt-2 flex items-center gap-2">
-                <Clock size={16} />
-                {t.home.studyTime}: {studyTime}s
               </p>
             </div>
 

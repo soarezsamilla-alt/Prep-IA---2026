@@ -43,8 +43,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error("Error getting session:", error);
+        // If session is invalid, ensure we are logged out
+        supabase.auth.signOut();
+        setIsAuthenticated(false);
+        setUser(defaultUser);
+      } else if (session?.user) {
         setUser({
           id: session.user.id,
           name: session.user.user_metadata.name || "Usuário",
@@ -59,8 +65,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event as string) === 'TOKEN_REFRESH_REVOKED' || event === 'SIGNED_OUT') {
+        setUser(defaultUser);
+        setIsAuthenticated(false);
+      } else if (session?.user) {
         setUser({
           id: session.user.id,
           name: session.user.user_metadata.name || "Usuário",

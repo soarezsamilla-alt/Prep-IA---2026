@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -9,46 +9,7 @@ export async function generatePracticeQuestions(subject: string, difficulty: str
     es: `Crea un simulacro de ${count} preguntas de opción múltiple sobre ${subject} para oposiciones, nivel ${difficulty}.`
   };
 
-  const jsonFormats: Record<string, string> = {
-    pt: `
-    Formato JSON esperado:
-    [
-      {
-        "id": 1,
-        "question": "Texto da questão...",
-        "options": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."],
-        "correctAnswer": "A",
-        "explanation": "Explicação detalhada do porquê a resposta está correta e as outras erradas."
-      }
-    ]
-    Retorne APENAS o JSON válido, sem markdown ou texto adicional.`,
-    en: `
-    Expected JSON format:
-    [
-      {
-        "id": 1,
-        "question": "Question text...",
-        "options": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."],
-        "correctAnswer": "A",
-        "explanation": "Detailed explanation of why the answer is correct and others are wrong."
-      }
-    ]
-    Return ONLY valid JSON, without markdown or additional text.`,
-    es: `
-    Formato JSON esperado:
-    [
-      {
-        "id": 1,
-        "question": "Texto de la pregunta...",
-        "options": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."],
-        "correctAnswer": "A",
-        "explanation": "Explicación detallada de por qué la respuesta es correcta y las otras incorrectas."
-      }
-    ]
-    Devuelve SOLO JSON válido, sin markdown ni texto adicional.`
-  };
-
-  const prompt = `${prompts[language] || prompts.pt}\n${jsonFormats[language] || jsonFormats.pt}`;
+  const prompt = prompts[language] || prompts.pt;
 
   try {
     const response = await ai.models.generateContent({
@@ -56,14 +17,39 @@ export async function generatePracticeQuestions(subject: string, difficulty: str
       contents: prompt,
       config: {
         responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            questions: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.INTEGER },
+                  question: { type: Type.STRING },
+                  options: { 
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING }
+                  },
+                  correctAnswer: { type: Type.STRING },
+                  explanation: { type: Type.STRING }
+                },
+                required: ["id", "question", "options", "correctAnswer", "explanation"]
+              }
+            }
+          },
+          required: ["questions"]
+        },
         temperature: 0.7, // Slightly creative but focused
         topK: 40,
         topP: 0.95,
       }
     });
-    const text = response.text || "[]";
-    const cleanText = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    return JSON.parse(cleanText);
+    
+    // With responseSchema, the output is guaranteed to be valid JSON matching the schema
+    const text = response.text || "{}";
+    const data = JSON.parse(text);
+    return data.questions || [];
   } catch (error) {
     console.error("Error generating questions:", error);
     return [];
