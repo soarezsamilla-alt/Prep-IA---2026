@@ -243,6 +243,10 @@ export default function Home() {
               <p className="text-blue-100 text-sm">
                 {t.home.accuracy} • {dailyQuestions} {t.home.questionsToday}
               </p>
+              <p className="text-blue-100 text-sm mt-2 flex items-center gap-2">
+                <Clock size={16} />
+                {t.home.studyTime}: {studyTime}s
+              </p>
             </div>
 
             <div className="h-2 bg-black/20 rounded-full overflow-hidden">

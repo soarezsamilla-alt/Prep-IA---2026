@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
-import { Mail, Lock, User, ArrowRight, CheckCircle } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, CheckCircle, Info } from "lucide-react";
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -106,7 +106,7 @@ export default function Login() {
                           required={!isLogin}
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 dark:text-white placeholder-gray-400"
+                          className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-900 dark:text-white placeholder-gray-400 shadow-sm"
                           placeholder="Seu nome"
                         />
                       </div>
@@ -126,12 +126,12 @@ export default function Login() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 dark:text-white placeholder-gray-400"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-900 dark:text-white placeholder-gray-400 shadow-sm"
                     placeholder={isLogin ? "seu@email.com" : "E-mail usado na compra"}
                   />
                 </div>
                 {!isLogin && (
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1.5">
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1.5 font-medium">
                     * Use o mesmo e-mail utilizado na compra do acesso.
                   </p>
                 )}
@@ -146,7 +146,7 @@ export default function Login() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 dark:text-white placeholder-gray-400"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-900 dark:text-white placeholder-gray-400 shadow-sm"
                     placeholder="••••••••"
                   />
                 </div>
@@ -179,6 +179,17 @@ export default function Login() {
                 </button>
               </p>
             </div>
+
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800 text-sm text-blue-800 dark:text-blue-200">
+              <div className="flex gap-3">
+                <Info className="shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" size={18} />
+                <div className="space-y-2">
+                  <p><strong>Dica importante:</strong> Após criar sua conta com o e-mail de compra, caso ocorra algum erro ao entrar, atualize a página e tente fazer login novamente.</p>
+                  <p>Verifique também sua caixa de entrada (Gmail, Outlook) para confirmar o cadastro se necessário.</p>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

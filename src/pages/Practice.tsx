@@ -114,7 +114,7 @@ export default function Practice() {
     setStep("loading");
     
     // Initial batch configuration
-    const initialCount = 2;
+    const initialCount = 1; // Reduced to 1 for "speed of light" start
     const finalCount = 5;
     setTotalQuestions(finalCount);
     
@@ -145,6 +145,8 @@ export default function Practice() {
 
       // Fetch remaining questions in background
       const remainingCount = finalCount - initialCount;
+      
+      // 1. Fetch remaining of current batch
       generatePracticeQuestions(selectedSubjectName, difficultyMap[difficulty], remainingCount, language)
         .then(remainingQuestions => {
           if (remainingQuestions.length > 0) {
@@ -159,7 +161,6 @@ export default function Practice() {
               const newQuestions = [...prev, ...adjustedRemainingQuestions];
               
               // Update activity with all questions
-              // Defer update to avoid "Cannot update a component while rendering a different component"
               setTimeout(() => {
                 updateActivity(newActivityId, {
                   data: {
@@ -174,6 +175,12 @@ export default function Practice() {
           }
         })
         .catch(err => console.error("Error fetching remaining questions:", err));
+
+      // 2. Pre-fetch next round (5 questions) IN PARALLEL
+      // This ensures the next batch is ready by the time the user finishes the current one
+      generatePracticeQuestions(selectedSubjectName, difficultyMap[difficulty], 5, language)
+        .then(nextRoundQuestions => setNextQuestions(nextRoundQuestions))
+        .catch(e => console.error("Error pre-fetching next round:", e));
         
     } else {
       setStep("setup");
@@ -249,20 +256,6 @@ export default function Practice() {
       });
       addPoints(score * 10); // 10 points per correct answer
     }
-
-    // Pre-fetch next questions
-    const difficultyMap: Record<string, string> = {
-      "Easy": t.practice.difficulties.Easy,
-      "Medium": t.practice.difficulties.Medium,
-      "Hard": t.practice.difficulties.Hard
-    };
-    
-    let selectedSubjectName = t.subjects[subject as keyof typeof t.subjects];
-    if (subject === "Outra") selectedSubjectName = customSubject;
-
-    generatePracticeQuestions(selectedSubjectName, difficultyMap[difficulty], 5, language)
-      .then(qs => setNextQuestions(qs))
-      .catch(e => console.error("Error pre-fetching questions:", e));
   };
 
   const handleRestart = () => {
@@ -276,10 +269,32 @@ export default function Practice() {
     setCurrentActivityId(null);
   };
 
-  const handleContinueSameSubject = () => {
-    if (nextQuestions.length > 0) {
-      setQuestions(nextQuestions);
-      setTotalQuestions(nextQuestions.length);
+  const handleContinueSameSubject = async () => {
+    let questionsToUse = nextQuestions;
+
+    if (questionsToUse.length === 0) {
+      // If pre-fetch failed or hasn't finished, fetch now
+      setStep("loading");
+      const difficultyMap: Record<string, string> = {
+        "Easy": t.practice.difficulties.Easy,
+        "Medium": t.practice.difficulties.Medium,
+        "Hard": t.practice.difficulties.Hard
+      };
+      let selectedSubjectName = t.subjects[subject as keyof typeof t.subjects];
+      if (subject === "Outra") selectedSubjectName = customSubject;
+      
+      try {
+        questionsToUse = await generatePracticeQuestions(selectedSubjectName, difficultyMap[difficulty], 5, language);
+      } catch (e) {
+        console.error("Error fetching next round:", e);
+        handleStart(); // Fallback to restart if fetch fails
+        return;
+      }
+    }
+
+    if (questionsToUse.length > 0) {
+      setQuestions(questionsToUse);
+      setTotalQuestions(questionsToUse.length);
       setCurrentQuestionIndex(0);
       setSelectedOption(null);
       setShowExplanation(false);
@@ -296,25 +311,30 @@ export default function Practice() {
         type: 'quiz',
         subject: selectedSubjectName,
         score: 0,
-        total: nextQuestions.length,
+        total: questionsToUse.length,
         timestamp: Date.now(),
         status: 'in_progress',
         data: {
-          questions: nextQuestions,
+          questions: questionsToUse,
           currentQuestionIndex: 0
         }
       });
 
       setStep("quiz");
       setNextQuestions([]);
+
+      // Pre-fetch subsequent round
+      const difficultyMap: Record<string, string> = {
+        "Easy": t.practice.difficulties.Easy,
+        "Medium": t.practice.difficulties.Medium,
+        "Hard": t.practice.difficulties.Hard
+      };
+      generatePracticeQuestions(selectedSubjectName, difficultyMap[difficulty], 5, language)
+        .then(qs => setNextQuestions(qs))
+        .catch(e => console.error("Error pre-fetching subsequent round:", e));
+
     } else {
-      setQuestions([]);
-      setTotalQuestions(0);
-      setCurrentQuestionIndex(0);
-      setSelectedOption(null);
-      setShowExplanation(false);
-      setScore(0);
-      setCurrentActivityId(null);
+      // Should not happen if fetch succeeds, but just in case
       handleStart();
     }
   };
